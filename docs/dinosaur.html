@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小恐龍遊戲</title>
+    <style>
+        body { 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            background-color: #f0f0f0; 
+        }
+        #gameCanvas { 
+            border: 1px solid black; 
+            background-color: white;
+        }
+        #restartButton {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="600" height="200"></canvas>
+    <button id="restartButton">重新開始</button>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const restartButton = document.getElementById('restartButton');
+
+        let dino, obstacle, score, gameLoop;
+
+        function initGame() {
+            dino = {
+                x: 50,
+                y: 150,
+                width: 40,
+                height: 60,
+                jumping: false,
+                jumpStrength: 15,
+                yVelocity: 0
+            };
+
+            obstacle = {
+                x: canvas.width,
+                y: 160,
+                width: 20,
+                height: 40,
+                speed: 5
+            };
+
+            score = 0;
+        }
+
+        function drawDino() {
+            ctx.fillStyle = 'green';
+            ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
+        }
+
+        function drawObstacle() {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        }
+
+        function drawScore() {
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.fillText(`得分: ${score}`, 10, 30);
+        }
+
+        function drawDebugInfo() {
+            ctx.fillStyle = 'black';
+            ctx.font = '12px Arial';
+            ctx.fillText(`Jumping: ${dino.jumping}`, 10, 50);
+            ctx.fillText(`Y Position: ${dino.y}`, 10, 70);
+            ctx.fillText(`Y Velocity: ${dino.yVelocity}`, 10, 90);
+        }
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (dino.jumping) {
+                dino.yVelocity += 1;
+                dino.y += dino.yVelocity;
+                if (dino.y >= 150) {
+                    dino.y = 150;
+                    dino.jumping = false;
+                    dino.yVelocity = 0;
+                }
+            }
+
+            obstacle.x -= obstacle.speed;
+            if (obstacle.x < -obstacle.width) {
+                obstacle.x = canvas.width;
+                score++;
+            }
+
+            if (
+                dino.x < obstacle.x + obstacle.width &&
+                dino.x + dino.width > obstacle.x &&
+                dino.y < obstacle.y + obstacle.height &&
+                dino.y + dino.height > obstacle.y
+            ) {
+                endGame();
+            }
+
+            drawDino();
+            drawObstacle();
+            drawScore();
+            drawDebugInfo();
+        }
+
+        function jump() {
+            if (!dino.jumping) {
+                dino.jumping = true;
+                dino.yVelocity = -dino.jumpStrength;
+            }
+        }
+
+        function endGame() {
+            clearInterval(gameLoop);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '30px Arial';
+            ctx.fillText(`遊戲結束! 得分: ${score}`, canvas.width / 2 - 100, canvas.height / 2);
+            restartButton.style.display = 'block';
+        }
+
+        function startGame() {
+            initGame();
+            restartButton.style.display = 'none';
+            gameLoop = setInterval(update, 1000 / 60);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                jump();
+            }
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            jump();
+        });
+
+        restartButton.addEventListener('click', startGame);
+
+        startGame();
+    </script>
+</body>
+</html>
